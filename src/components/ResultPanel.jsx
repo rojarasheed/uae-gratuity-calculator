@@ -11,153 +11,202 @@ export default function ResultPanel({ result, form, onReset, onRecalculate }) {
   const years = result.totalYears.toFixed(2)
 
   function exportPDF() {
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-    const W = 210
-    const margin = 20
-    const contentWidth = W - margin * 2
-    let y = 20
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const W = 210
+  const margin = 20
+  const contentWidth = W - margin * 2
+  const pageHeight = 297
+  const footerHeight = 15
+  const usableHeight = pageHeight - footerHeight
+  let y = 20
 
-    // ── Header bar ──────────────────────────────────────────
-    pdf.setFillColor(26, 26, 26)
-    pdf.rect(0, 0, W, 28, 'F')
-    pdf.setFontSize(16)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    pdf.text('UAE Gratuity Calculation', margin, 13)
+  const checkPageBreak = (neededHeight) => {
+    if (y + neededHeight > usableHeight) {
+      pdf.addPage()
+      y = 20
+    }
+  }
+
+  const drawFooter = () => {
+    const pageCount = pdf.internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i)
+      pdf.setFontSize(7)
+      pdf.setTextColor(160, 160, 160)
+      pdf.text(
+        `Generated ${format(new Date(), 'dd MMMM yyyy')}  ·  For reference only. Consult a legal professional for official advice.`,
+        margin,
+        285
+      )
+      if (pageCount > 1) {
+        pdf.text(`Page ${i} of ${pageCount}`, W - margin, 285, { align: 'right' })
+      }
+    }
+  }
+
+  // ── Header bar ──────────────────────────────────────────
+  pdf.setFillColor(26, 26, 26)
+  pdf.rect(0, 0, W, 28, 'F')
+  pdf.setFontSize(16)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('UAE Gratuity Calculation', margin, 13)
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(180, 180, 180)
+  pdf.text('Federal Decree-Law No. 33 of 2021  ·  For reference only', margin, 21)
+  y = 38
+
+  // ── Employee details row ─────────────────────────────────
+  checkPageBreak(22)
+  pdf.setFillColor(248, 247, 244)
+  pdf.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F')
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(120, 113, 108)
+  pdf.text('CONTRACT TYPE', margin + 6, y + 7)
+  pdf.text('REASON', margin + 55, y + 7)
+  pdf.text('BASIC SALARY', margin + 105, y + 7)
+  pdf.text('SERVICE PERIOD', margin + 148, y + 7)
+  pdf.setFontSize(10)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(26, 26, 26)
+  pdf.text(CONTRACT_LABELS[form.contractType], margin + 6, y + 16)
+  pdf.text(REASON_LABELS[form.reason], margin + 55, y + 16)
+  pdf.text(`AED ${Number(form.basicSalary).toLocaleString('en-AE')}`, margin + 105, y + 16)
+  pdf.text(`${years} years`, margin + 148, y + 16)
+  y += 28
+
+  // ── Dates row ────────────────────────────────────────────
+  checkPageBreak(12)
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(120, 113, 108)
+  pdf.text(
+    `Service period:  ${format(new Date(form.joinDate), 'dd MMM yyyy')}  →  ${format(new Date(form.endDate), 'dd MMM yyyy')}  (${result.totalDays} calendar days)`,
+    margin,
+    y
+  )
+  y += 12
+
+  // ── Total gratuity highlight ─────────────────────────────
+  checkPageBreak(22)
+  pdf.setFillColor(236, 253, 245)
+  pdf.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F')
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(5, 150, 105)
+  pdf.text('TOTAL GRATUITY', margin + 6, y + 8)
+  pdf.setFontSize(18)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(4, 120, 87)
+  pdf.text(`AED ${fmt(result.totalGratuity)}`, margin + 6, y + 18)
+  if (result.capped) {
     pdf.setFontSize(8)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(180, 180, 180)
-    pdf.text('Federal Decree-Law No. 33 of 2021  ·  For reference only', margin, 21)
-    y = 38
-
-    // ── Employee details row ─────────────────────────────────
-    pdf.setFillColor(248, 247, 244)
-    pdf.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F')
-    pdf.setFontSize(8)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(120, 113, 108)
-    pdf.text('CONTRACT TYPE', margin + 6, y + 7)
-    pdf.text('REASON', margin + 55, y + 7)
-    pdf.text('BASIC SALARY', margin + 105, y + 7)
-    pdf.text('SERVICE PERIOD', margin + 148, y + 7)
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(26, 26, 26)
-    pdf.text(CONTRACT_LABELS[form.contractType], margin + 6, y + 16)
-    pdf.text(REASON_LABELS[form.reason], margin + 55, y + 16)
-    pdf.text(`AED ${Number(form.basicSalary).toLocaleString('en-AE')}`, margin + 105, y + 16)
-    pdf.text(`${years} years`, margin + 148, y + 16)
-    y += 28
-
-    // ── Dates row ────────────────────────────────────────────
-    pdf.setFontSize(8)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(120, 113, 108)
-    pdf.text(
-      `Service period:  ${format(new Date(form.joinDate), 'dd MMM yyyy')}  to  ${format(new Date(form.endDate), 'dd MMM yyyy')}  (${result.totalDays} calendar days)`,
-      margin,
-      y
-    )
-    y += 12
-
-    // ── Total gratuity highlight ─────────────────────────────
-    pdf.setFillColor(236, 253, 245)
-    pdf.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F')
-    pdf.setFontSize(9)
     pdf.setFont('helvetica', 'normal')
     pdf.setTextColor(5, 150, 105)
-    pdf.text('TOTAL GRATUITY', margin + 6, y + 8)
-    pdf.setFontSize(18)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(4, 120, 87)
-    pdf.text(`AED ${fmt(result.totalGratuity)}`, margin + 6, y + 18)
-    if (result.capped) {
-      pdf.setFontSize(8)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(5, 150, 105)
-      pdf.text('2-year salary cap applied', margin + 120, y + 18)
-    }
-    y += 30
+    pdf.text('2-year salary cap applied', margin + 120, y + 18)
+  }
+  y += 30
 
-    // ── Reduction notice ─────────────────────────────────────
-    if (result.reductionNote) {
-      pdf.setFillColor(255, 251, 235)
-      pdf.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F')
-      pdf.setFontSize(8)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(146, 64, 14)
-      pdf.text(`Resignation reduction: ${result.reductionNote}`, margin + 4, y + 8)
-      y += 18
-    }
-
-    // ── Breakdown table ──────────────────────────────────────
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(120, 113, 108)
-    pdf.text('YEAR-BY-YEAR BREAKDOWN', margin, y)
-    y += 6
-
-    // Table header
-    pdf.setFillColor(26, 26, 26)
-    pdf.rect(margin, y, contentWidth, 9, 'F')
+  // ── Reduction notice ─────────────────────────────────────
+  if (result.reductionNote) {
+    checkPageBreak(12)
+    pdf.setFillColor(255, 251, 235)
+    pdf.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F')
     pdf.setFontSize(8)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    const cols = [margin + 3, margin + 45, margin + 85, margin + 120, margin + 148]
-    const headers = ['Period', 'Duration', 'Rate', 'Days Earned', 'Amount (AED)']
-    headers.forEach((h, i) => pdf.text(h, cols[i], y + 6))
-    y += 9
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(146, 64, 14)
+    pdf.text(`Resignation reduction: ${result.reductionNote}`, margin + 4, y + 8)
+    y += 18
+  }
 
-    // Table rows
-    result.breakdown.forEach((row, idx) => {
-      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 247, 244]
-      pdf.setFillColor(...rowBg)
+  // ── Breakdown table header ───────────────────────────────
+  checkPageBreak(15)
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(120, 113, 108)
+  pdf.text('YEAR-BY-YEAR BREAKDOWN', margin, y)
+  y += 6
+
+  // Table column header
+  checkPageBreak(9)
+  pdf.setFillColor(26, 26, 26)
+  pdf.rect(margin, y, contentWidth, 9, 'F')
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(255, 255, 255)
+  const cols = [margin + 3, margin + 45, margin + 85, margin + 120, margin + 148]
+  const headers = ['Period', 'Duration', 'Rate', 'Days Earned', 'Amount (AED)']
+  headers.forEach((h, i) => pdf.text(h, cols[i], y + 6))
+  y += 9
+
+  // ── Table rows — each row checks for page break ──────────
+  result.breakdown.forEach((row, idx) => {
+    checkPageBreak(9)
+
+    // If a new page was added, redraw the column header
+    if (y === 20) {
+      pdf.setFillColor(26, 26, 26)
       pdf.rect(margin, y, contentWidth, 9, 'F')
       pdf.setFontSize(8)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(26, 26, 26)
-      pdf.text(row.label, cols[0], y + 6)
-      pdf.text(row.duration, cols[1], y + 6)
-      pdf.text(`${row.rateDays} days/yr`, cols[2], y + 6)
-      pdf.text(row.daysEarned.toFixed(2), cols[3], y + 6)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(fmt(row.amount), cols[4], y + 6)
+      pdf.setTextColor(255, 255, 255)
+      headers.forEach((h, i) => pdf.text(h, cols[i], y + 6))
       y += 9
-    })
+    }
 
-    // Total row
-    pdf.setFillColor(4, 120, 87)
-    pdf.rect(margin, y, contentWidth, 10, 'F')
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    pdf.text('TOTAL GRATUITY', cols[0], y + 7)
-    pdf.text(`AED ${fmt(result.totalGratuity)}`, cols[4], y + 7)
-    y += 18
-
-    // ── Daily wage note ──────────────────────────────────────
+    const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 247, 244]
+    pdf.setFillColor(...rowBg)
+    pdf.rect(margin, y, contentWidth, 9, 'F')
     pdf.setFontSize(8)
     pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(120, 113, 108)
-    pdf.text(
-      `Daily wage used: AED ${result.dailyWage.toFixed(2)}  (basic salary ÷ 30)`,
-      margin,
-      y
-    )
-    y += 14
-
-    // ── Law reference box ────────────────────────────────────────────
-    const notesBoxHeight = 66
-    pdf.setDrawColor(200, 200, 200)
-    pdf.setLineWidth(0.3)
-    pdf.roundedRect(margin, y, contentWidth, notesBoxHeight, 2, 2, 'S')
-    pdf.setFontSize(8)
-    pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(26, 26, 26)
-    pdf.text('UAE Labour Law Reference', margin + 4, y + 7)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(80, 80, 80)
-    const notes = [
+    pdf.text(row.label, cols[0], y + 6)
+    pdf.text(row.duration, cols[1], y + 6)
+    pdf.text(`${row.rateDays} days/yr`, cols[2], y + 6)
+    pdf.text(row.daysEarned.toFixed(2), cols[3], y + 6)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(fmt(row.amount), cols[4], y + 6)
+    y += 9
+  })
+
+  // Total row
+  checkPageBreak(10)
+  pdf.setFillColor(4, 120, 87)
+  pdf.rect(margin, y, contentWidth, 10, 'F')
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('TOTAL GRATUITY', cols[0], y + 7)
+  pdf.text(`AED ${fmt(result.totalGratuity)}`, cols[4], y + 7)
+  y += 18
+
+  // ── Daily wage note ──────────────────────────────────────
+  checkPageBreak(10)
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(120, 113, 108)
+  pdf.text(
+    `Daily wage used: AED ${result.dailyWage.toFixed(2)}  (basic salary ÷ 30)`,
+    margin,
+    y
+  )
+  y += 14
+
+  // ── Law reference box ────────────────────────────────────
+  const notesBoxHeight = 66
+  checkPageBreak(notesBoxHeight)
+  pdf.setDrawColor(200, 200, 200)
+  pdf.setLineWidth(0.3)
+  pdf.roundedRect(margin, y, contentWidth, notesBoxHeight, 2, 2, 'S')
+  pdf.setFontSize(8)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(26, 26, 26)
+  pdf.text('UAE Labour Law Reference', margin + 4, y + 7)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(80, 80, 80)
+  const notes = [
     '• Applies to: expatriate workers in the UAE private sector only',
     '• Does NOT apply to: UAE nationals, government employees, domestic workers, DIFC/ADGM',
     '• Calculated on basic salary only — allowances excluded',
@@ -166,21 +215,15 @@ export default function ResultPanel({ result, form, onReset, onRecalculate }) {
     '• Years 6+: 30 days basic salary per year (for each year beyond year 5)',
     '• Partial years are pro-rated (total service must exceed 1 year)',
     '• Total gratuity cannot exceed 2 years\' basic salary',
-    ]
-    notes.forEach((note, i) => pdf.text(note, margin + 4, y + 14 + i * 6))
-    y += notesBoxHeight + 10   // ← this is the key line, was y += 48 before
+  ]
+  notes.forEach((note, i) => pdf.text(note, margin + 4, y + 14 + i * 6))
+  y += notesBoxHeight + 10
 
-    // ── Footer ───────────────────────────────────────────
-    pdf.setFontSize(7)
-        pdf.setTextColor(160, 160, 160)
-        pdf.text(
-        `Generated ${format(new Date(), 'dd MMMM yyyy')}  ·  For reference only. Consult a legal professional for official advice.`,
-        margin,
-        285
-        )
+  // ── Footer on every page ─────────────────────────────────
+  drawFooter()
 
-    pdf.save('UAE-Gratuity-Calculation.pdf')
-  }
+  pdf.save('UAE-Gratuity-Calculation.pdf')
+}
 
   // ── Not eligible state ───────────────────────────────────
   if (!result.eligible) {

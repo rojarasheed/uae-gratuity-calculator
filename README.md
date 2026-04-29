@@ -2,7 +2,7 @@
 
 A full-featured end-of-service gratuity calculator for the UAE, built with React + Vite. Accurate calculations based on **Federal Decree-Law No. 33 of 2021, Article 51** — the current UAE Labour Law.
 
-🔗 **Live Demo:** [uae-gratuity-calculator.vercel.app](https://uae-gratuity-calculator.vercel.app)
+🔗 **Live Demo:** [uae-gratuity-calculator.gamma.vercel.app](https://uae-gratuity-calculator.gamma.vercel.app)
 
 ---
 

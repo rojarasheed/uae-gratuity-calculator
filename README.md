@@ -104,4 +104,4 @@ This tool is for **reference purposes only**. Results are based on the minimum s
 
 ---
 
-Built by [Your Name](https://github.com/rojarasheed) · UAE 🇦🇪
+Built by [Roja Rasheed](https://github.com/rojarasheed) · UAE 🇦🇪
